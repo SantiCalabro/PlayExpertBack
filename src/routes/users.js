@@ -1,16 +1,9 @@
 const { Router } = require("express");
+const { getUsers, postUser, getUserById } = require("../controllers/users");
 const router = Router();
-const { Users, Location } = require("../db");
 
-router.get("/users", async (req, res) => {
-  try {
-    const allUsers = await Users.findAll({
-      include: Users,
-    });
-    res.status(200).json(allUsers);
-  } catch (error) {
-    res.status(400).json({ error: "No se encontraron Usuarios" });
-  }
-});
+router.get("/", getUsers);
+router.get("/:email", getUserById);
+router.post("/", postUser);
 
 module.exports = router;

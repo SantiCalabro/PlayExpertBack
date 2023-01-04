@@ -5,12 +5,11 @@ module.exports = (sequelize) => {
   // defino el modelo
   sequelize.define('product', {
     id: {
-      type: DataTypes.UUID,
-      allowNull: false,
+      type: DataTypes.SMALLINT,
       primaryKey: true,
-      defaultValue: DataTypes.UUIDV4,
+      autoIncrement: true
     },
-    creator:{
+    creator: {
       type: DataTypes.STRING,
       defaultValue: "admin"
     },
@@ -32,7 +31,11 @@ module.exports = (sequelize) => {
     stock: {
       type: DataTypes.INTEGER,
       allowNull: false,
-    }
+    },
+    status: {
+      type: DataTypes.ENUM('active', 'inactive', 'banned'),
+      defaultValue: "active",
+    },
   }, {
     timestamps: false
   });
