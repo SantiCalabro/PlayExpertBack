@@ -5,6 +5,7 @@ const populateUser = async () => {
   const user = {
     username: "pccomponentshenry",
     email: "pccomponentshenry@gmail.com",
+    isAdmin: true,
   };
   await Users.create(user);
 };
@@ -59,7 +60,7 @@ const postUser = async (req, res) => {
         username,
         //locationId: findLocation.dataValues.id
       },
-      raw: true
+      raw: true,
     });
 
     const userRegistered = user[1];
@@ -71,9 +72,7 @@ const postUser = async (req, res) => {
     }
 
     res.send("User created successfully");
-
-  }
-  catch (error) {
+  } catch (error) {
     res.status(404).json(error.message);
   }
 };
