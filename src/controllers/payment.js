@@ -29,8 +29,8 @@ const handlePayment = async (req, res) => {
       payment_method_types: ["card"],
       line_items: listProduct,
       mode: "payment",
-      success_url: "https://play-expert-yxtc.vercel.app/success",
-      cancel_url: `https://play-expert-yxtc.vercel.app/cart`,
+      success_url: "https://play-expert-pf-qnol.vercel.app/success",
+      cancel_url: `https://play-expert-pf-qnol.vercel.app/cart`,
     });
 
     res.status(200).send({ id: session.id });
