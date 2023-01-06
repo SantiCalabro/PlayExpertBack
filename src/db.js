@@ -4,14 +4,14 @@ const fs = require("fs");
 const path = require("path");
 const { DB_USER, DB_PASSWORD, DB_HOST, DB_DEPLOY } = process.env;
 
-// const sequelize = new Sequelize(`postgres://${DB_USER}:${DB_PASSWORD}@${DB_HOST}/ecommerce`, {
-//   logging: false, // set to console.log to see the raw SQL queries
-//   native: false, // lets Sequelize know we can use pg-native for ~30% more speed
-// });
-const sequelize = new Sequelize(DB_DEPLOY, {
+const sequelize = new Sequelize(`postgres://${DB_USER}:${DB_PASSWORD}@${DB_HOST}/ecommerce`, {
   logging: false, // set to console.log to see the raw SQL queries
   native: false, // lets Sequelize know we can use pg-native for ~30% more speed
 });
+// const sequelize = new Sequelize(DB_DEPLOY, {
+//   logging: false, // set to console.log to see the raw SQL queries
+//   native: false, // lets Sequelize know we can use pg-native for ~30% more speed
+// });
 
 const basename = path.basename(__filename);
 
@@ -39,21 +39,8 @@ sequelize.models = Object.fromEntries(capsEntries);
 
 // En sequelize.models están todos los modelos importados como propiedades
 // Para relacionarlos hacemos un destructuring
-const {
-  Brand,
-  Cart,
-  CartItem,
-  Category,
-  Location,
-  Product,
-  Users,
-  UserFavorite,
-  Address,
-  Order,
-  OrderItem,
-  Productreview,
-  Userreview,
-} = sequelize.models;
+const { Brand, Cart, CartItem, Category, Location, Product, Users, UserFavorite, Address, Order, OrderItem, Productreview, Userreview } =
+  sequelize.models;
 
 // Aca vendrian las relaciones
 // Product.hasMany(Reviews);
@@ -82,20 +69,15 @@ Address.belongsTo(Users);
 Location.hasMany(Address);
 Address.belongsTo(Location);
 
-Users.hasMany(Order, { as: "seller", foreignKey: "sellerId" });
+Users.hasMany(Order);
+Order.belongsTo(Users);
 Address.hasMany(Order);
-Order.belongsTo(Users, { as: "buyer", foreignKey: "buyerId" });
 Order.belongsTo(Address);
 
 Product.hasMany(OrderItem);
 OrderItem.belongsTo(Product);
 Order.hasMany(OrderItem);
 OrderItem.belongsTo(Order);
-
-// Cart.hasMany(Users);
-// Users.belongsTo(Cart);
-// Cart.hasMany(CartItem);
-// CartItem.belongsTo(Cart);
 
 Users.hasMany(Userreview);
 Userreview.belongsTo(Users);

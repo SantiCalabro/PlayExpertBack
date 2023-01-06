@@ -1,6 +1,5 @@
 const { conn } = require("../db");
-const { Product, Category, Brand, Users } = require("../db");
-const { insertIntoString } = require("../utils");
+const { Product, Category, Brand, Users, Order, OrderItem } = require("../db");
 const jsonProducts = require("../json/all.json");
 
 const populateProducts = async () => {
@@ -78,7 +77,7 @@ const getProductById = async (req, res) => {
           stock: el.stock,
           category: el.category.name,
           brand: el.brand.name,
-          creator: el.creator,
+          user: el.userId,
           status: el.status,
         });
       }
@@ -87,6 +86,32 @@ const getProductById = async (req, res) => {
     res.status(404).send(error);
   }
 };
+
+const getProductsByUser = async (req, res) => {
+  const { id } = req.params;
+
+  try {
+    const products = await Product.findAll(
+      {
+        where: {
+          userId: id
+        },
+        include: [
+          {
+            model: Category,
+            attributes: ["name"],
+          },
+          {
+            model: Brand,
+            attributes: ["name"],
+          }
+        ],
+      });
+    res.status(200).send(products);
+  } catch (error) {
+    res.status(400).send(error);
+  }
+}
 
 const getFilteredProducts = async (req, res) => {
   const { category, brand, name } = req.query;
@@ -122,79 +147,146 @@ const getFilteredProducts = async (req, res) => {
 };
 
 const postProducts = async (req, res) => {
-  const { name, brand, stock, price, description, img, category, creator } =
-    req.body;
+  const { title, brand, stock, price, description, img, category, userId } = req.body;
+
   try {
     const findBrand = await Brand.findOne({
       where: {
         name: brand,
       },
     });
+
     const findCategory = await Category.findOne({
       where: {
         name: category,
       },
     });
-    await Product.create({
-      title: name,
+
+    const product = await Product.create({
+      title,
       img,
       price,
       description,
       stock,
       categoryId: findCategory.dataValues.id,
       brandId: findBrand.dataValues.id,
-      creator,
+      userId,
     });
-    res.send("Product created successfully");
+
+    res.send(product);
   } catch (error) {
+    console.log(error)
     res.status(404).json({ error: error.message });
   }
 };
 
 const putProducts = async (req, res) => {
   const { id } = req.params;
-  const { name, brand, stock, price, description, img, category } = req.body;
+  const { brand, category } = req.body;
 
   try {
+
+    const updateParams = {};
+
+    for (item in req.body) {
+      if (req.body[item] && req.body[item]?.length) {
+        updateParams[item] = req.body[item];
+      }
+    }
+
     const findBrand = await Brand.findOne({
       where: {
         name: brand,
       },
     });
+
     const findCategory = await Category.findOne({
       where: {
         name: category,
       },
     });
 
-    let forUpdate = await Product.findByPk(id);
-    await forUpdate.update({
-      title: name,
-      stock,
-      price,
-      description,
-      img,
-      categoryId: findCategory.dataValues.id,
-      brandId: findBrand.dataValues.id,
-    });
-    res.status(200).send("Product update successfully");
+    if (findBrand) {
+      updateParams.brandId = findBrand.dataValues.id;
+    }
+    if (findCategory) {
+      updateParams.categoryId = findCategory.dataValues.id;
+    }
+
+    const forUpdate = await Product.findByPk(id);
+    await forUpdate.update(updateParams);
+
+    res.status(200).send("Product updated successfully");
   } catch (error) {
     res.status(400).send(error.message);
   }
 };
+
 const deleteProduct = async (req, res) => {
   let { id } = req.params;
 
   let forDelete = await Product.findByPk(id);
   if (id && forDelete) {
-    await forDelete.update({
-      status: "inactive",
-    });
-    res.send("se elimino con exito");
+    try {
+      await forDelete.update({
+        status: "inactive",
+      });
+      res.status(200).send("Product deleted successfully");
+    } catch (error) {
+      res.status(400).send(error);
+    }
+
   } else {
     res.status(400).json({
-      error: "No se recibieron los parámetros necesarios para borrar el Post",
+      error: "No se recibieron los parámetros necesarios para borrar el producto",
     });
+  }
+};
+
+const updateProductStock = async (req, res) => {
+  const { userId } = req.params;
+
+  try {
+    const order = await Order.findOne({
+      where: {
+        userId,
+        status: "created"
+      },
+      raw: true
+    });
+
+    const orderItems = await OrderItem.findAll({
+      where: {
+        orderId: order.id
+      },
+      raw: true
+    });
+
+    for (let i = 0; i < orderItems.length; i++) {
+      const id = orderItems[i].productId;
+      const product = await Product.findByPk(id, { raw: true });
+      const newStock = product.stock - orderItems[i].quantity > 0
+        ? product.stock - orderItems[i].quantity
+        : 0;
+
+      const whereParams = { id };
+
+      if (!newStock) {
+        whereParams.status = "inactive";
+      }
+
+      await Product.update(
+        {
+          stock: newStock
+        },
+        {
+          where: whereParams
+        }
+      );
+    }
+    res.status(200).send("Stock updated");
+  } catch (error) {
+    res.status(400).send(error);
   }
 };
 
@@ -206,4 +298,6 @@ module.exports = {
   postProducts,
   putProducts,
   deleteProduct,
+  updateProductStock,
+  getProductsByUser
 };
