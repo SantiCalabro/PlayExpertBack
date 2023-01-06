@@ -1,6 +1,6 @@
 const { Router } = require("express");
 const Stripe = require("stripe");
-require('dotenv').config();
+require("dotenv").config();
 const { DB_PAYMENT } = process.env;
 
 const stripe = new Stripe(DB_PAYMENT);
@@ -16,28 +16,27 @@ const handlePayment = async (req, res) => {
         currency: "usd",
         product_data: {
           name: p.name,
-          images: p.images
+          images: p.images,
         },
-        unit_amount: p.price
+        unit_amount: p.price,
       },
-      quantity: p.quantity
-    }
+      quantity: p.quantity,
+    };
     listProduct.push(lineProduct);
-  })
+  });
   try {
     const session = await stripe.checkout.sessions.create({
       payment_method_types: ["card"],
       line_items: listProduct,
-      mode: 'payment',
-      success_url: "http://localhost:5173/success",
-      cancel_url: `http://localhost:5173/cart`,
+      mode: "payment",
+      success_url: "https://play-expert-21ns.vercel.app/success",
+      cancel_url: `https://play-expert-21ns.vercel.app/cart`,
     });
 
     res.status(200).send({ id: session.id });
-  }
-  catch (error) {
+  } catch (error) {
     res.status(400).send(error);
   }
-}
+};
 
 module.exports = { handlePayment };
