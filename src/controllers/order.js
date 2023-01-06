@@ -1,14 +1,13 @@
 const Stripe = require("stripe");
-require('dotenv').config();
+require("dotenv").config();
 const { DB_PAYMENT } = process.env;
-const { Order, OrderItem, Product, Users, conn } = require('../db');
+const { Order, OrderItem, Product, Users, conn } = require("../db");
 const axios = require("axios");
 
 const stripe = new Stripe(DB_PAYMENT);
 
 const handlePayment = async (req, res) => {
   const products = req.body.products;
-
 
   const listProduct = [];
 
@@ -18,29 +17,28 @@ const handlePayment = async (req, res) => {
         currency: "usd",
         product_data: {
           name: p.name,
-          images: p.images
+          images: p.images,
         },
-        unit_amount: p.price
+        unit_amount: p.price,
       },
-      quantity: p.quantity
-    }
+      quantity: p.quantity,
+    };
     listProduct.push(lineProduct);
-  })
+  });
   try {
     const session = await stripe.checkout.sessions.create({
       payment_method_types: ["card"],
       line_items: listProduct,
-      mode: 'payment',
-      success_url: "http://localhost:5173/success",
-      cancel_url: `http://localhost:5173/order`,
+      mode: "payment",
+      success_url: "https://play-expert-yxtc.vercel.app/success",
+      cancel_url: `https://play-expert-yxtc.vercel.app/order`,
     });
 
     res.status(200).send({ id: session.id });
-  }
-  catch (error) {
+  } catch (error) {
     res.status(400).send(error);
   }
-}
+};
 
 const createOrder = async (req, res) => {
   const { userId, addressId } = req.body;
@@ -48,34 +46,38 @@ const createOrder = async (req, res) => {
   try {
     const order = await Order.create({ userId, addressId });
     res.status(200).send({ id: order.id });
-  }
-  catch (error) {
+  } catch (error) {
     res.status(400).send(error);
   }
-}
+};
 
 const createOrderItem = async (req, res) => {
   const { orderId, item } = req.body;
 
   try {
-    await OrderItem.create({ orderId, quantity: item.quantity, productId: item.productId, price: item.price });
+    await OrderItem.create({
+      orderId,
+      quantity: item.quantity,
+      productId: item.productId,
+      price: item.price,
+    });
     res.status(200).send("Order successfully created");
-  }
-  catch (error) {
+  } catch (error) {
     res.status(400).send(error);
   }
-}
+};
 
 const changeOrderStatus = async (req, res) => {
   const { userId, status } = req.body;
 
   try {
-    await Order.update({ status },
+    await Order.update(
+      { status },
       {
         where: {
           status: "created",
-          userId
-        }
+          userId,
+        },
       }
     );
 
@@ -88,11 +90,10 @@ const changeOrderStatus = async (req, res) => {
     }
 
     res.status(200).send(`Order successfully ${status}`);
-  }
-  catch (error) {
+  } catch (error) {
     res.status(400).send(error);
   }
-}
+};
 
 const getOrders = async (req, res) => {
   const { userId } = req.params;
@@ -102,29 +103,28 @@ const getOrders = async (req, res) => {
       where: { userId },
       include: {
         model: OrderItem,
-        include: Product
-      }
+        include: Product,
+      },
     });
 
     res.status(200).send(orders);
-  }
-  catch (error) {
+  } catch (error) {
     res.status(400).send(error);
   }
-}
+};
 const getAllOrders = async (req, res) => {
-  const allOrder =  await Order.findAll({
-    include:[{
-      model: OrderItem,
-      include: Product
-    }
-    ]
-  })
-  res.status(200).send(allOrder)
-}
+  const allOrder = await Order.findAll({
+    include: [
+      {
+        model: OrderItem,
+        include: Product,
+      },
+    ],
+  });
+  res.status(200).send(allOrder);
+};
 
 const getSoldProducts = async (req, res) => {
-
   try {
     let sqlQuery = `SELECT p.id, p.title, p.img, SUM(oi.quantity) AS total 
     FROM "orderItems" AS oi 
@@ -140,11 +140,17 @@ const getSoldProducts = async (req, res) => {
     });
 
     res.status(200).send(sales);
-  }
-  catch (error) {
+  } catch (error) {
     res.status(400).send(error);
   }
-}
+};
 
-
-module.exports = { handlePayment, createOrder, createOrderItem, changeOrderStatus, getOrders, getSoldProducts,getAllOrders };
+module.exports = {
+  handlePayment,
+  createOrder,
+  createOrderItem,
+  changeOrderStatus,
+  getOrders,
+  getSoldProducts,
+  getAllOrders,
+};
