@@ -29,8 +29,8 @@ const handlePayment = async (req, res) => {
       payment_method_types: ["card"],
       line_items: listProduct,
       mode: "payment",
-      success_url: "https://deploy-9-1.vercel.app/success",
-      cancel_url: `https://deploy-9-1.vercel.app/cart`,
+      success_url: "https://deploy11-1.vercel.app/success",
+      cancel_url: `https://deploy11-1.vercel.app/cart`,
     });
 
     res.status(200).send({ id: session.id });
