@@ -14,7 +14,7 @@ const axios = require("axios");
 
 const stripe = new Stripe(DB_PAYMENT);
 // const URL = "http://localhost:5173";
-const URL = "https://play-expert-henry-pf.vercel.app";
+const URL = "https://play-expert-henry-pf-ybb9.vercel.app/";
 const handlePayment = async (req, res) => {
   const products = req.body.products;
 
